@@ -1,5 +1,5 @@
 import { IProcessor } from 'typeorm-fixtures-cli';
-import { User } from '../../modules/users/entities/user.entity';
+import { User } from '../../app/users/entities/user.entity';
 
 export default class UserProcessor implements IProcessor<User> {
   private readonly emptyString: string;
