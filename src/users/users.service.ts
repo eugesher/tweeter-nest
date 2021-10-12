@@ -6,11 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { sign } from 'jsonwebtoken';
 import { compare } from 'bcrypt';
+import { sign } from 'jsonwebtoken';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseInterface } from './types/user-response.interface';
 import {
   EMAIL_TAKEN,
@@ -82,5 +83,11 @@ export class UsersService {
         user = await this.findOne(user.id);
         return user;
     }
+  }
+
+  async update(id: string, dto: UpdateUserDto): Promise<User> {
+    const user = await this.findOne(id);
+    Object.assign(user, dto);
+    return await this.userRepository.save(user);
   }
 }
