@@ -1,6 +1,9 @@
+import { config } from 'dotenv';
 import { ConnectionOptions } from 'typeorm';
 
-const config: ConnectionOptions = {
+config();
+
+const ormconfig: ConnectionOptions = {
   type: 'postgres',
   host: process.env.DB_HOST,
   port: parseInt(process.env.DB_PORT),
@@ -14,4 +17,4 @@ const config: ConnectionOptions = {
   },
 };
 
-export default config;
+export default ormconfig;
