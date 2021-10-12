@@ -24,7 +24,6 @@ export class UsersController {
   @Post('signup')
   async signup(@Body() dto: CreateUserDto): Promise<UserResponseInterface> {
     const user = await this.usersService.signup(dto);
-    delete user.password;
     return this.usersService.buildUserResponse(user);
   }
 
@@ -50,7 +49,6 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ) {
     const user = await this.usersService.update(id, dto);
-    delete user.password;
     return this.usersService.buildUserResponse(user);
   }
 }

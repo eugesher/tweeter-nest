@@ -37,6 +37,10 @@ export class UsersService {
     user: User,
     options = { withToken: false },
   ): UserResponseInterface {
+    if (user.password) {
+      delete user.password;
+    }
+
     return {
       ...user,
       token: options.withToken ? this.generateJwt(user) : undefined,
