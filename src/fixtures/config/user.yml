@@ -1,5 +1,5 @@
 entity: User
-processor: ./processors/user.processor.ts
+processor: ../processors/user.processor.ts
 items:
   user{1..1000}:
     email: '{{internet.email}}'

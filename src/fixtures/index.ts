@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import * as path from 'path';
+import { join, resolve } from 'path';
 import {
   Builder,
   fixturesIterator,
@@ -8,7 +8,7 @@ import {
   Resolver,
 } from 'typeorm-fixtures-cli/dist';
 import { createConnection, getRepository } from 'typeorm';
-import ormconfig from './src/ormconfig';
+import ormconfig from '../config/ormconfig';
 
 config();
 
@@ -19,7 +19,7 @@ async function loadFixtures(fixturesPath: string): Promise<void> {
     connection = await createConnection(ormconfig);
 
     const loader = new Loader();
-    loader.load(path.resolve(fixturesPath));
+    loader.load(resolve(fixturesPath));
 
     const resolver = new Resolver();
     const fixtures = resolver.resolve(loader.fixtureConfigs);
@@ -68,7 +68,7 @@ async function loadFixtures(fixturesPath: string): Promise<void> {
   }
 }
 
-loadFixtures('./fixtures')
+loadFixtures(join(__dirname, 'config'))
   .then(() => {
     console.log('Fixtures are successfully loaded.');
   })
