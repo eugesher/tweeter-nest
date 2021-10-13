@@ -1,0 +1,7 @@
+entity: Tweet
+processor: ../processors/tweet.processor.ts
+items:
+  tweet{1..500}:
+    body: '{{lorem.paragraph}}'
+    image: '{{image.image}}'
+    author: '@user*'

@@ -3,6 +3,7 @@ import { join, resolve } from 'path';
 import {
   Builder,
   fixturesIterator,
+  IEntity,
   Loader,
   Parser,
   Resolver,
@@ -11,6 +12,22 @@ import { createConnection, getRepository } from 'typeorm';
 import ormconfig from '../config/ormconfig';
 
 config();
+
+const isDuplicateUser = async (entity: IEntity): Promise<boolean> => {
+  const userByUsername = await getRepository(entity.constructor.name).findOne({
+    username: entity.username,
+  });
+
+  if (Boolean(userByUsername)) {
+    return true;
+  }
+
+  const userByEmail = await getRepository(entity.constructor.name).findOne({
+    email: entity.email,
+  });
+
+  return Boolean(userByEmail);
+};
 
 async function loadFixtures(fixturesPath: string): Promise<void> {
   let connection;
@@ -32,21 +49,7 @@ async function loadFixtures(fixturesPath: string): Promise<void> {
       const entity = await builder.build(fixture);
 
       if (entity.constructor.name === 'User') {
-        const userByUsername = await getRepository(
-          entity.constructor.name,
-        ).findOne({ username: entity.username });
-
-        if (Boolean(userByUsername)) {
-          console.log(skippedMessage);
-          counter++;
-          continue;
-        }
-
-        const userByEmail = await getRepository(
-          entity.constructor.name,
-        ).findOne({ email: entity.email });
-
-        if (Boolean(userByEmail)) {
+        if (await isDuplicateUser(entity)) {
           console.log(skippedMessage);
           counter++;
           continue;
