@@ -23,7 +23,9 @@
     "db:drop": "npm run typeorm schema:drop",
     "db:create": "npm run typeorm migration:generate -- -n",
     "db:migrate": "npm run typeorm migration:run",
-    "db:seed": "ts-node src/fixtures/index.ts"
+    "db:seed": "ts-node src/fixtures/index.ts",
+    "db:rebuild": "npm run db:drop && npm run db:migrate",
+    "db:reseed": "npm run db:rebuild && npm run db:seed"
   },
   "dependencies": {
     "@nestjs/common": "^8.0.0",
