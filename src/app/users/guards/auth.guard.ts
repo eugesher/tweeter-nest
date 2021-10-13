@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ExpressRequestInterface } from '../../../types/express-request.interface';
+import { AUTH_REQUIRED } from '../constants/users.constants';
 
 Injectable();
 export class AuthGuard implements CanActivate {
@@ -14,7 +15,7 @@ export class AuthGuard implements CanActivate {
     if (req.user) {
       return true;
     } else {
-      throw new UnauthorizedException('authorization required');
+      throw new UnauthorizedException(AUTH_REQUIRED);
     }
   }
 }
