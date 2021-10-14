@@ -4,14 +4,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinTable,
-  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { hash } from 'bcrypt';
 import { Tweet } from '../../tweets/entities/tweet.entity';
+import { Retweet } from '../../tweets/entities/retweet.entity';
 
 @Entity('users')
 export class User {
@@ -48,19 +47,8 @@ export class User {
   @OneToMany(() => Tweet, (tweet) => tweet.author)
   tweets: Tweet[];
 
-  @ManyToMany(() => Tweet)
-  @JoinTable({
-    name: 'retweets',
-    joinColumn: {
-      name: 'user_id',
-      referencedColumnName: 'id',
-    },
-    inverseJoinColumn: {
-      name: 'tweet_id',
-      referencedColumnName: 'id',
-    },
-  })
-  retweets: Tweet[];
+  @OneToMany(() => Retweet, (retweet) => retweet.user)
+  retweets: Retweet[];
 
   @BeforeInsert()
   @BeforeUpdate()

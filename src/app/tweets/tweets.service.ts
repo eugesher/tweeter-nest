@@ -11,6 +11,7 @@ import {
   SelectQueryBuilder,
 } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
+import { Retweet } from './entities/retweet.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateTweetDto } from './dto/create-tweet.dto';
 import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
@@ -21,6 +22,8 @@ export class TweetsService {
   constructor(
     @InjectRepository(Tweet)
     private readonly tweetRepository: Repository<Tweet>,
+    @InjectRepository(Retweet)
+    private readonly retweetRepository: Repository<Retweet>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
@@ -38,7 +41,7 @@ export class TweetsService {
     }
   }
 
-  private async findOne(id) {
+  private async findOne(id: string): Promise<Tweet> {
     const tweet = await this.tweetRepository.findOne(id);
     if (!tweet) {
       throw new NotFoundException(NOT_FOUND);
@@ -108,41 +111,34 @@ export class TweetsService {
     }
   }
 
-  async createRetweet(id: string, currentUserId: string): Promise<Tweet> {
+  async createRetweet(id: string, currentUser: User): Promise<Tweet> {
     const tweet = await this.findOne(id);
-    const user = await this.userRepository.findOne(currentUserId, {
-      relations: ['retweets'],
+    let retweet = await this.retweetRepository.findOne({
+      userId: currentUser.id,
+      tweetId: tweet.id,
     });
 
-    const isNotReplied =
-      user.retweets.findIndex((retweet) => retweet.id === tweet.id) === -1;
-
-    if (isNotReplied) {
-      user.retweets.push(tweet);
+    if (!retweet) {
+      retweet = new Retweet();
+      retweet.user = currentUser;
+      retweet.tweet = tweet;
       tweet.retweetsCount++;
-      await this.userRepository.save(user);
+      await this.retweetRepository.save(retweet);
       await this.tweetRepository.save(tweet);
     }
 
     return tweet;
   }
 
-  async removeRetweet(id: string, currentUserId: string): Promise<Tweet> {
+  async removeRetweet(id: string, currentUser: User): Promise<Tweet> {
     const tweet = await this.findOne(id);
-    const user = await this.userRepository.findOne(currentUserId, {
-      relations: ['retweets'],
+    tweet.retweetsCount--;
+
+    await this.retweetRepository.delete({
+      userId: currentUser.id,
+      tweetId: tweet.id,
     });
-
-    const tweetIndex = user.retweets.findIndex(
-      (retweet) => retweet.id === tweet.id,
-    );
-
-    if (tweetIndex !== -1) {
-      user.retweets.splice(tweetIndex, 1);
-      tweet.retweetsCount--;
-      await this.userRepository.save(user);
-      await this.tweetRepository.save(tweet);
-    }
+    await this.tweetRepository.save(tweet);
 
     return tweet;
   }

@@ -58,17 +58,17 @@ export class TweetsController {
   @UseGuards(AuthGuard)
   async createRetweet(
     @Param('id') id: string,
-    @CurrentUser('id') currentUserId: string,
+    @CurrentUser() currentUser: User,
   ): Promise<Tweet> {
-    return await this.tweetsService.createRetweet(id, currentUserId);
+    return await this.tweetsService.createRetweet(id, currentUser);
   }
 
   @Delete(':id/retweet')
   @UseGuards(AuthGuard)
   async removeRetweet(
     @Param('id') id: string,
-    @CurrentUser('id') currentUserId: string,
+    @CurrentUser() currentUser: User,
   ): Promise<Tweet> {
-    return await this.tweetsService.removeRetweet(id, currentUserId);
+    return await this.tweetsService.removeRetweet(id, currentUser);
   }
 }

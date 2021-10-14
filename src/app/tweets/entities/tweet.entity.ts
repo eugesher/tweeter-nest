@@ -4,10 +4,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Retweet } from './retweet.entity';
 
 @Entity('tweets')
 export class Tweet {
@@ -22,6 +24,9 @@ export class Tweet {
 
   @Column({ name: 'retweets_count', default: 0 })
   retweetsCount: number;
+
+  @OneToMany(() => Retweet, (retweet) => retweet.user)
+  retweets: Retweet[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
