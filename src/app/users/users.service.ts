@@ -5,7 +5,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindConditions, Repository } from 'typeorm';
 import { compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { User } from './entities/user.entity';
@@ -19,6 +19,7 @@ import {
   NOT_FOUND,
   USERNAME_TAKEN,
 } from './constants/users.constants';
+import { IProfileResponse } from './interfaces/profile-response.interface';
 
 @Injectable()
 export class UsersService {
@@ -34,14 +35,20 @@ export class UsersService {
   }
 
   buildUserResponse(user: User, options = { withToken: false }): IUserResponse {
-    if (user.password) {
-      delete user.password;
-    }
+    delete user.password;
 
     return {
       ...user,
       token: options.withToken ? this.generateJwt(user) : undefined,
     };
+  }
+
+  buildProfileResponse(user: User): IProfileResponse {
+    delete user.email;
+    delete user.createdAt;
+    delete user.updatedAt;
+
+    return { ...user, isFollowing: false };
   }
 
   async signup(dto: CreateUserDto): Promise<User> {
@@ -71,13 +78,13 @@ export class UsersService {
       case await compare(dto.password, user.password):
         throw new ForbiddenException(INVALID_CREDENTIALS);
       default:
-        user = await this.findOne(user.id);
+        user = await this.findOne({ id: user.id });
         return user;
     }
   }
 
-  async findOne(id: string): Promise<User> {
-    const user = await this.userRepository.findOne(id);
+  async findOne(conditions: FindConditions<User>): Promise<User> {
+    const user = await this.userRepository.findOne(conditions);
 
     if (!user) {
       throw new NotFoundException(NOT_FOUND);
@@ -87,7 +94,7 @@ export class UsersService {
   }
 
   async update(currentUserId: string, dto: UpdateUserDto): Promise<User> {
-    const user = await this.findOne(currentUserId);
+    const user = await this.findOne({ id: currentUserId });
     Object.assign(user, dto);
     return await this.userRepository.save(user);
   }
