@@ -30,8 +30,19 @@ export class TweetsController {
   }
 
   @Get()
+  @UseGuards(AuthGuard)
   async findAll(@Query('') query: IFindTweetsQuery): Promise<Tweet[]> {
     return await this.tweetsService.findAll(query);
+  }
+
+  @Get(':username')
+  @UseGuards(AuthGuard)
+  async findByAuthor(
+    @Param('username') username: string,
+    @Query('') query: IFindTweetsQuery,
+    @CurrentUser() currentUser: User,
+  ): Promise<Tweet[]> {
+    return await this.tweetsService.findByAuthor(username, query, currentUser);
   }
 
   @Delete(':id')

@@ -4,7 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, getRepository, Repository } from 'typeorm';
+import {
+  DeleteResult,
+  getRepository,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateTweetDto } from './dto/create-tweet.dto';
@@ -19,6 +24,19 @@ export class TweetsService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
+
+  private static handleQuery(
+    query: IFindTweetsQuery,
+    queryBuilder: SelectQueryBuilder<Tweet>,
+  ): void {
+    if (query.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    if (query.offset) {
+      queryBuilder.offset(query.offset);
+    }
+  }
 
   async create(dto: CreateTweetDto, currentUser: User): Promise<Tweet> {
     const tweet = new Tweet();
@@ -40,20 +58,34 @@ export class TweetsService {
       ])
       .orderBy('tweets.createdAt', 'DESC');
 
-    if (query.author) {
-      const author = await this.userRepository.findOne({
-        username: query.author,
-      });
-      queryBuilder.andWhere('tweets.author_id = :id', { id: author.id });
-    }
+    TweetsService.handleQuery(query, queryBuilder);
 
-    if (query.limit) {
-      queryBuilder.limit(query.limit);
-    }
+    return await queryBuilder.getMany();
+  }
 
-    if (query.offset) {
-      queryBuilder.offset(query.offset);
-    }
+  async findByAuthor(
+    username: string,
+    query: IFindTweetsQuery,
+    currentUser: User,
+  ): Promise<Tweet[]> {
+    const author =
+      username === currentUser.username
+        ? currentUser
+        : await this.userRepository.findOne({ username });
+    const queryBuilder = getRepository(Tweet)
+      .createQueryBuilder('tweets')
+      .leftJoin('tweets.author', 'author')
+      .addSelect([
+        'author.id',
+        'author.username',
+        'author.firstName',
+        'author.lastName',
+        'author.image',
+      ])
+      .andWhere('tweets.author_id = :id', { id: author.id })
+      .orderBy('tweets.createdAt', 'DESC');
+
+    TweetsService.handleQuery(query, queryBuilder);
 
     return await queryBuilder.getMany();
   }
