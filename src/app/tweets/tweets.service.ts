@@ -20,17 +20,14 @@ export class TweetsService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(currentUser: User, dto: CreateTweetDto): Promise<Tweet> {
+  async create(dto: CreateTweetDto, currentUser: User): Promise<Tweet> {
     const tweet = new Tweet();
     Object.assign(tweet, dto);
     tweet.author = currentUser;
     return await this.tweetRepository.save(tweet);
   }
 
-  async findAll(
-    currentUserId: string,
-    query: FindTweetsQueryInterface,
-  ): Promise<Tweet[]> {
+  async findAll(query: FindTweetsQueryInterface): Promise<Tweet[]> {
     const queryBuilder = await getRepository(Tweet)
       .createQueryBuilder('tweets')
       .leftJoinAndSelect('tweets.author', 'author')
@@ -54,7 +51,7 @@ export class TweetsService {
     return await queryBuilder.getMany();
   }
 
-  async remove(currentUserId: string, id: string): Promise<DeleteResult> {
+  async remove(id: string, currentUserId: string): Promise<DeleteResult> {
     const tweet = await this.tweetRepository.findOne(id);
     if (!tweet) {
       throw new NotFoundException(NOT_FOUND);

@@ -47,16 +47,6 @@ export class UsersService {
     };
   }
 
-  async findOne(id: string): Promise<User> {
-    const user = await this.userRepository.findOne(id);
-
-    if (!user) {
-      throw new NotFoundException(NOT_FOUND);
-    } else {
-      return user;
-    }
-  }
-
   async signup(dto: CreateUserDto): Promise<User> {
     switch (true) {
       case Boolean(await this.userRepository.findOne({ email: dto.email })):
@@ -89,8 +79,18 @@ export class UsersService {
     }
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<User> {
-    const user = await this.findOne(id);
+  async findOne(id: string): Promise<User> {
+    const user = await this.userRepository.findOne(id);
+
+    if (!user) {
+      throw new NotFoundException(NOT_FOUND);
+    } else {
+      return user;
+    }
+  }
+
+  async update(currentUserId: string, dto: UpdateUserDto): Promise<User> {
+    const user = await this.findOne(currentUserId);
     Object.assign(user, dto);
     return await this.userRepository.save(user);
   }

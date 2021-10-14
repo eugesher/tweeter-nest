@@ -45,10 +45,10 @@ export class UsersController {
   @Patch('me')
   @UseGuards(AuthGuard)
   async updateCurrent(
-    @CurrentUser('id') id: string,
+    @CurrentUser('id') currentUserId: string,
     @Body() dto: UpdateUserDto,
   ) {
-    const user = await this.usersService.update(id, dto);
+    const user = await this.usersService.update(currentUserId, dto);
     return this.usersService.buildUserResponse(user);
   }
 }

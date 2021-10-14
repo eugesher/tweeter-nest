@@ -23,26 +23,23 @@ export class TweetsController {
   @Post()
   @UseGuards(AuthGuard)
   async create(
-    @CurrentUser() currentUser: User,
     @Body() dto: CreateTweetDto,
+    @CurrentUser() currentUser: User,
   ): Promise<Tweet> {
-    return await this.tweetsService.create(currentUser, dto);
+    return await this.tweetsService.create(dto, currentUser);
   }
 
   @Get()
-  async findAll(
-    @CurrentUser('id') currentUserId: string,
-    @Query('') query: FindTweetsQueryInterface,
-  ): Promise<Tweet[]> {
-    return await this.tweetsService.findAll(currentUserId, query);
+  async findAll(@Query('') query: FindTweetsQueryInterface): Promise<Tweet[]> {
+    return await this.tweetsService.findAll(query);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard)
   async remove(
-    @CurrentUser('id') currentUserId: string,
     @Param('id') id: string,
+    @CurrentUser('id') currentUserId: string,
   ) {
-    return this.tweetsService.remove(currentUserId, id);
+    return this.tweetsService.remove(id, currentUserId);
   }
 }
