@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
   Post,
   UseGuards,
@@ -15,6 +16,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { IUserResponse } from './interfaces/user-response.interface';
+import { IProfileResponse } from './interfaces/profile-response.interface';
 import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('users')
@@ -38,6 +40,14 @@ export class UsersController {
   @UseGuards(AuthGuard)
   async getCurrent(@CurrentUser() currentUser: User): Promise<IUserResponse> {
     return this.usersService.buildUserResponse(currentUser);
+  }
+
+  @Get('profile/:username')
+  async getProfile(
+    @Param('username') username: string,
+  ): Promise<IProfileResponse> {
+    const user = await this.usersService.findOne({ username });
+    return this.usersService.buildProfileResponse(user);
   }
 
   @Patch('me')
