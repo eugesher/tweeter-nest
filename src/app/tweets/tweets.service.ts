@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -15,7 +16,11 @@ import { Retweet } from './entities/retweet.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateTweetDto } from './dto/create-tweet.dto';
 import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
-import { DELETE_FORBIDDEN, NOT_FOUND } from './constants/tweets.constants';
+import {
+  DELETE_FORBIDDEN,
+  NOT_FOUND,
+  OWN_TWEET,
+} from './constants/tweets.constants';
 import { TweetResponseInterface } from './interfaces/tweet-response.interface';
 
 @Injectable()
@@ -116,10 +121,14 @@ export class TweetsService {
     id: string,
     currentUser: User,
   ): Promise<TweetResponseInterface> {
+    if (await this.tweetRepository.findOne({ id, author: currentUser })) {
+      throw new BadRequestException(OWN_TWEET);
+    }
+
     const tweet = await this.findOne(id);
     let retweet = await this.retweetRepository.findOne({
-      userId: currentUser.id,
-      tweetId: tweet.id,
+      user: currentUser,
+      tweet: tweet,
     });
 
     if (!retweet) {
@@ -138,12 +147,16 @@ export class TweetsService {
     id: string,
     currentUser: User,
   ): Promise<TweetResponseInterface> {
+    if (await this.tweetRepository.findOne({ id, author: currentUser })) {
+      throw new BadRequestException(OWN_TWEET);
+    }
+
     const tweet = await this.findOne(id);
     tweet.retweetsCount--;
 
     await this.retweetRepository.delete({
-      userId: currentUser.id,
-      tweetId: tweet.id,
+      user: currentUser,
+      tweet: tweet,
     });
     await this.tweetRepository.save(tweet);
 
