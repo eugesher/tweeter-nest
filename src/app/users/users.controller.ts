@@ -18,7 +18,6 @@ import { User } from './entities/user.entity';
 import { IUserResponse } from './interfaces/user-response.interface';
 import { IProfileResponse } from './interfaces/profile-response.interface';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { IProfileResponse } from './interfaces/profile-response.interface';
 
 @Controller('users')
 export class UsersController {
