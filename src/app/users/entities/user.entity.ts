@@ -4,6 +4,8 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -45,6 +47,19 @@ export class User {
 
   @OneToMany(() => Tweet, (tweet) => tweet.author)
   tweets: Tweet[];
+
+  @ManyToMany(() => Tweet)
+  @JoinTable({
+    joinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'tweet_id',
+      referencedColumnName: 'id',
+    },
+  })
+  replies: Tweet[];
 
   @BeforeInsert()
   @BeforeUpdate()
