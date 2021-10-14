@@ -8,7 +8,7 @@ import { DeleteResult, getRepository, Repository } from 'typeorm';
 import { Tweet } from './entities/tweet.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateTweetDto } from './dto/create-tweet.dto';
-import { FindTweetsQueryInterface } from './types/find-tweets-query.interface';
+import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
 import { DELETE_FORBIDDEN, NOT_FOUND } from './constants/tweets.constants';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class TweetsService {
     return await this.tweetRepository.save(tweet);
   }
 
-  async findAll(query: FindTweetsQueryInterface): Promise<Tweet[]> {
+  async findAll(query: IFindTweetsQuery): Promise<Tweet[]> {
     const queryBuilder = getRepository(Tweet)
       .createQueryBuilder('tweets')
       .leftJoin('tweets.author', 'author')

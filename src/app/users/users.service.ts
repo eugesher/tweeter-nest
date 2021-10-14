@@ -12,7 +12,7 @@ import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserResponseInterface } from './types/user-response.interface';
+import { IUserResponse } from './interfaces/user-response.interface';
 import {
   EMAIL_TAKEN,
   INVALID_CREDENTIALS,
@@ -33,10 +33,7 @@ export class UsersService {
     });
   }
 
-  buildUserResponse(
-    user: User,
-    options = { withToken: false },
-  ): UserResponseInterface {
+  buildUserResponse(user: User, options = { withToken: false }): IUserResponse {
     if (user.password) {
       delete user.password;
     }

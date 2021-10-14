@@ -14,7 +14,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { UserResponseInterface } from './types/user-response.interface';
+import { IUserResponse } from './interfaces/user-response.interface';
 import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('users')
@@ -22,23 +22,21 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('signup')
-  async signup(@Body() dto: CreateUserDto): Promise<UserResponseInterface> {
+  async signup(@Body() dto: CreateUserDto): Promise<IUserResponse> {
     const user = await this.usersService.signup(dto);
     return this.usersService.buildUserResponse(user);
   }
 
   @Post('signin')
   @HttpCode(HttpStatus.OK)
-  async signin(@Body() dto: LoginUserDto): Promise<UserResponseInterface> {
+  async signin(@Body() dto: LoginUserDto): Promise<IUserResponse> {
     const user = await this.usersService.signin(dto);
     return this.usersService.buildUserResponse(user, { withToken: true });
   }
 
   @Get('me')
   @UseGuards(AuthGuard)
-  async getCurrent(
-    @CurrentUser() currentUser: User,
-  ): Promise<UserResponseInterface> {
+  async getCurrent(@CurrentUser() currentUser: User): Promise<IUserResponse> {
     return this.usersService.buildUserResponse(currentUser);
   }
 

@@ -13,7 +13,7 @@ import { CreateTweetDto } from './dto/create-tweet.dto';
 import { AuthGuard } from '../users/guards/auth.guard';
 import { Tweet } from './entities/tweet.entity';
 import { User } from '../users/entities/user.entity';
-import { FindTweetsQueryInterface } from './types/find-tweets-query.interface';
+import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
 import { CurrentUser } from '../users/decorators/current-user.decorator';
 
 @Controller('tweets')
@@ -30,7 +30,7 @@ export class TweetsController {
   }
 
   @Get()
-  async findAll(@Query('') query: FindTweetsQueryInterface): Promise<Tweet[]> {
+  async findAll(@Query('') query: IFindTweetsQuery): Promise<Tweet[]> {
     return await this.tweetsService.findAll(query);
   }
 
