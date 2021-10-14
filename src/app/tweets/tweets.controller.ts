@@ -29,15 +29,6 @@ export class TweetsController {
     return await this.tweetsService.create(dto, currentUser);
   }
 
-  @Post(':id/retweet')
-  @UseGuards(AuthGuard)
-  async createRetweet(
-    @Param('id') id: string,
-    @CurrentUser('id') currentUserId: string,
-  ): Promise<Tweet> {
-    return await this.tweetsService.createRetweet(id, currentUserId);
-  }
-
   @Get()
   @UseGuards(AuthGuard)
   async findAll(@Query('') query: IFindTweetsQuery): Promise<Tweet[]> {
@@ -61,5 +52,23 @@ export class TweetsController {
     @CurrentUser('id') currentUserId: string,
   ) {
     return this.tweetsService.remove(id, currentUserId);
+  }
+
+  @Post(':id/retweet')
+  @UseGuards(AuthGuard)
+  async createRetweet(
+    @Param('id') id: string,
+    @CurrentUser('id') currentUserId: string,
+  ): Promise<Tweet> {
+    return await this.tweetsService.createRetweet(id, currentUserId);
+  }
+
+  @Delete(':id/retweet')
+  @UseGuards(AuthGuard)
+  async removeRetweet(
+    @Param('id') id: string,
+    @CurrentUser('id') currentUserId: string,
+  ): Promise<Tweet> {
+    return await this.tweetsService.removeRetweet(id, currentUserId);
   }
 }

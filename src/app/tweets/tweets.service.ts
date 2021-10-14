@@ -54,25 +54,6 @@ export class TweetsService {
     return await this.tweetRepository.save(tweet);
   }
 
-  async createRetweet(id: string, currentUserId: string): Promise<Tweet> {
-    const tweet = await this.findOne(id);
-    const user = await this.userRepository.findOne(currentUserId, {
-      relations: ['retweets'],
-    });
-
-    const isNotReplied =
-      user.retweets.findIndex((retweet) => retweet.id === tweet.id) === -1;
-
-    if (isNotReplied) {
-      user.retweets.push(tweet);
-      tweet.retweetsCount++;
-      await this.userRepository.save(user);
-      await this.tweetRepository.save(tweet);
-    }
-
-    return tweet;
-  }
-
   async findAll(query: IFindTweetsQuery): Promise<Tweet[]> {
     const queryBuilder = getRepository(Tweet)
       .createQueryBuilder('tweets')
@@ -125,5 +106,44 @@ export class TweetsService {
     } else {
       return await this.tweetRepository.delete(id);
     }
+  }
+
+  async createRetweet(id: string, currentUserId: string): Promise<Tweet> {
+    const tweet = await this.findOne(id);
+    const user = await this.userRepository.findOne(currentUserId, {
+      relations: ['retweets'],
+    });
+
+    const isNotReplied =
+      user.retweets.findIndex((retweet) => retweet.id === tweet.id) === -1;
+
+    if (isNotReplied) {
+      user.retweets.push(tweet);
+      tweet.retweetsCount++;
+      await this.userRepository.save(user);
+      await this.tweetRepository.save(tweet);
+    }
+
+    return tweet;
+  }
+
+  async removeRetweet(id: string, currentUserId: string): Promise<Tweet> {
+    const tweet = await this.findOne(id);
+    const user = await this.userRepository.findOne(currentUserId, {
+      relations: ['retweets'],
+    });
+
+    const tweetIndex = user.retweets.findIndex(
+      (retweet) => retweet.id === tweet.id,
+    );
+
+    if (tweetIndex !== -1) {
+      user.retweets.splice(tweetIndex, 1);
+      tweet.retweetsCount--;
+      await this.userRepository.save(user);
+      await this.tweetRepository.save(tweet);
+    }
+
+    return tweet;
   }
 }
