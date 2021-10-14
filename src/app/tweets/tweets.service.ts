@@ -28,10 +28,17 @@ export class TweetsService {
   }
 
   async findAll(query: FindTweetsQueryInterface): Promise<Tweet[]> {
-    const queryBuilder = await getRepository(Tweet)
+    const queryBuilder = getRepository(Tweet)
       .createQueryBuilder('tweets')
-      .leftJoinAndSelect('tweets.author', 'author')
-      .orderBy('tweets.created_at', 'DESC');
+      .leftJoin('tweets.author', 'author')
+      .addSelect([
+        'author.id',
+        'author.username',
+        'author.firstName',
+        'author.lastName',
+        'author.image',
+      ])
+      .orderBy('tweets.createdAt', 'DESC');
 
     if (query.author) {
       const author = await this.userRepository.findOne({
