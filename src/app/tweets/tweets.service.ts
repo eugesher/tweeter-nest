@@ -54,18 +54,18 @@ export class TweetsService {
     return await this.tweetRepository.save(tweet);
   }
 
-  async reply(id: string, currentUserId: string): Promise<Tweet> {
+  async createRetweet(id: string, currentUserId: string): Promise<Tweet> {
     const tweet = await this.findOne(id);
     const user = await this.userRepository.findOne(currentUserId, {
-      relations: ['replies'],
+      relations: ['retweets'],
     });
 
     const isNotReplied =
-      user.replies.findIndex((reply) => reply.id === tweet.id) === -1;
+      user.retweets.findIndex((retweet) => retweet.id === tweet.id) === -1;
 
     if (isNotReplied) {
-      user.replies.push(tweet);
-      tweet.repliesCount++;
+      user.retweets.push(tweet);
+      tweet.retweetsCount++;
       await this.userRepository.save(user);
       await this.tweetRepository.save(tweet);
     }

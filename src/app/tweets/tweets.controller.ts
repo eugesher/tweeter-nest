@@ -31,11 +31,11 @@ export class TweetsController {
 
   @Post(':id/retweet')
   @UseGuards(AuthGuard)
-  async addToFavorites(
+  async createRetweet(
     @Param('id') id: string,
     @CurrentUser('id') currentUserId: string,
   ): Promise<Tweet> {
-    return await this.tweetsService.reply(id, currentUserId);
+    return await this.tweetsService.createRetweet(id, currentUserId);
   }
 
   @Get()

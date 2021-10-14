@@ -50,6 +50,7 @@ export class User {
 
   @ManyToMany(() => Tweet)
   @JoinTable({
+    name: 'retweets',
     joinColumn: {
       name: 'user_id',
       referencedColumnName: 'id',
@@ -59,7 +60,7 @@ export class User {
       referencedColumnName: 'id',
     },
   })
-  replies: Tweet[];
+  retweets: Tweet[];
 
   @BeforeInsert()
   @BeforeUpdate()
