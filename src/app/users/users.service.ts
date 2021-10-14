@@ -20,6 +20,7 @@ import {
   NOT_FOUND,
   USERNAME_TAKEN,
 } from './constants/users.constants';
+import { IProfileResponse } from './interfaces/profile-response.interface';
 
 @Injectable()
 export class UsersService {
