@@ -38,11 +38,39 @@ export class TweetsService {
     }
   }
 
+  private async findOne(id) {
+    const tweet = await this.tweetRepository.findOne(id);
+    if (!tweet) {
+      throw new NotFoundException(NOT_FOUND);
+    } else {
+      return tweet;
+    }
+  }
+
   async create(dto: CreateTweetDto, currentUser: User): Promise<Tweet> {
     const tweet = new Tweet();
     Object.assign(tweet, dto);
     tweet.author = currentUser;
     return await this.tweetRepository.save(tweet);
+  }
+
+  async reply(id: string, currentUserId: string): Promise<Tweet> {
+    const tweet = await this.findOne(id);
+    const user = await this.userRepository.findOne(currentUserId, {
+      relations: ['replies'],
+    });
+
+    const isNotReplied =
+      user.replies.findIndex((reply) => reply.id === tweet.id) === -1;
+
+    if (isNotReplied) {
+      user.replies.push(tweet);
+      tweet.repliesCount++;
+      await this.userRepository.save(user);
+      await this.tweetRepository.save(tweet);
+    }
+
+    return tweet;
   }
 
   async findAll(query: IFindTweetsQuery): Promise<Tweet[]> {
@@ -91,10 +119,8 @@ export class TweetsService {
   }
 
   async remove(id: string, currentUserId: string): Promise<DeleteResult> {
-    const tweet = await this.tweetRepository.findOne(id);
-    if (!tweet) {
-      throw new NotFoundException(NOT_FOUND);
-    } else if (tweet.author.id !== currentUserId) {
+    const tweet = await this.findOne(id);
+    if (tweet.author.id !== currentUserId) {
       throw new ForbiddenException(DELETE_FORBIDDEN);
     } else {
       return await this.tweetRepository.delete(id);

@@ -20,6 +20,9 @@ export class Tweet {
   @Column({ nullable: true })
   image: string;
 
+  @Column({ name: 'replies_count', default: 0 })
+  repliesCount: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

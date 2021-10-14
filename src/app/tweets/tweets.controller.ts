@@ -29,6 +29,15 @@ export class TweetsController {
     return await this.tweetsService.create(dto, currentUser);
   }
 
+  @Post(':id/retweet')
+  @UseGuards(AuthGuard)
+  async addToFavorites(
+    @Param('id') id: string,
+    @CurrentUser('id') currentUserId: string,
+  ): Promise<Tweet> {
+    return await this.tweetsService.reply(id, currentUserId);
+  }
+
   @Get()
   @UseGuards(AuthGuard)
   async findAll(@Query('') query: IFindTweetsQuery): Promise<Tweet[]> {
