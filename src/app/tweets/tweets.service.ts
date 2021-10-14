@@ -16,6 +16,7 @@ import { User } from '../users/entities/user.entity';
 import { CreateTweetDto } from './dto/create-tweet.dto';
 import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
 import { DELETE_FORBIDDEN, NOT_FOUND } from './constants/tweets.constants';
+import { TweetResponseInterface } from './interfaces/tweet-response.interface';
 
 @Injectable()
 export class TweetsService {
@@ -111,7 +112,10 @@ export class TweetsService {
     }
   }
 
-  async createRetweet(id: string, currentUser: User): Promise<Tweet> {
+  async createRetweet(
+    id: string,
+    currentUser: User,
+  ): Promise<TweetResponseInterface> {
     const tweet = await this.findOne(id);
     let retweet = await this.retweetRepository.findOne({
       userId: currentUser.id,
@@ -127,10 +131,13 @@ export class TweetsService {
       await this.tweetRepository.save(tweet);
     }
 
-    return tweet;
+    return { ...tweet, isRetweeted: true };
   }
 
-  async removeRetweet(id: string, currentUser: User): Promise<Tweet> {
+  async removeRetweet(
+    id: string,
+    currentUser: User,
+  ): Promise<TweetResponseInterface> {
     const tweet = await this.findOne(id);
     tweet.retweetsCount--;
 
@@ -140,6 +147,6 @@ export class TweetsService {
     });
     await this.tweetRepository.save(tweet);
 
-    return tweet;
+    return { ...tweet, isRetweeted: false };
   }
 }
