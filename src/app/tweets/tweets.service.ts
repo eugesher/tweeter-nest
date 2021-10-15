@@ -11,18 +11,18 @@ import {
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
+import { FindOneOptions } from 'typeorm/find-options/FindOneOptions';
 import { Tweet } from './entities/tweet.entity';
 import { Retweet } from './entities/retweet.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateTweetDto } from './dto/create-tweet.dto';
+import { ITweetResponse } from './interfaces/tweet-response.interface';
 import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
 import {
   DELETE_FORBIDDEN,
   NOT_FOUND,
   OWN_TWEET,
 } from './constants/tweets.constants';
-import { ITweetResponse } from './interfaces/tweet-response.interface';
-import { FindOneOptions } from 'typeorm/find-options/FindOneOptions';
 
 @Injectable()
 export class TweetsService {
@@ -64,7 +64,7 @@ export class TweetsService {
     return queryBuilder;
   }
 
-  private setIsRetweeted(tweets: Tweet[], currentUser: User): ITweetResponse[] {
+  private setIsRetweeted(tweets: Tweet[], currentUser: User): Tweet[] {
     return tweets.map((tweet) => {
       if (tweet.retweets.some((retweet) => (retweet.userId = currentUser.id))) {
         return { ...tweet, isRetweeted: true };
@@ -90,7 +90,7 @@ export class TweetsService {
     tweets: Tweet[],
     currentUser: User,
     queryBuilder: SelectQueryBuilder<Tweet>,
-  ): Promise<ITweetResponse[]> {
+  ): Promise<Tweet[]> {
     const retweets = await this.retweetRepository.find({
       user: currentUser,
     });
@@ -137,10 +137,7 @@ export class TweetsService {
     return await this.tweetRepository.save(tweet);
   }
 
-  async findAll(
-    query: IFindTweetsQuery,
-    currentUser: User,
-  ): Promise<ITweetResponse[]> {
+  async findAll(query: IFindTweetsQuery, currentUser: User): Promise<Tweet[]> {
     const queryBuilder = TweetsService.getQueryBuilder(query);
     let tweets = await queryBuilder.getMany();
     tweets = this.setIsRetweeted(tweets, currentUser);
@@ -152,7 +149,7 @@ export class TweetsService {
     query: IFindTweetsQuery,
     currentUser: User,
     options = { withRetweets: false },
-  ): Promise<ITweetResponse[]> {
+  ): Promise<Tweet[]> {
     const author =
       username === currentUser.username
         ? currentUser

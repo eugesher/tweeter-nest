@@ -55,7 +55,7 @@ export class UsersController {
   async updateCurrent(
     @CurrentUser('id') currentUserId: string,
     @Body() dto: UpdateUserDto,
-  ) {
+  ): Promise<IUserResponse> {
     const user = await this.usersService.update(currentUserId, dto);
     return this.usersService.buildUserResponse(user);
   }
