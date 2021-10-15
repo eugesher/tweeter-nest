@@ -45,6 +45,18 @@ export class TweetsController {
     return await this.tweetsService.findByAuthor(username, query, currentUser);
   }
 
+  @Get(':username/with_retweets')
+  @UseGuards(AuthGuard)
+  async findByAuthorWithRetweets(
+    @Param('username') username: string,
+    @Query('') query: IFindTweetsQuery,
+    @CurrentUser() currentUser: User,
+  ): Promise<Tweet[]> {
+    return await this.tweetsService.findByAuthor(username, query, currentUser, {
+      withRetweets: true,
+    });
+  }
+
   @Delete(':id')
   @UseGuards(AuthGuard)
   async remove(

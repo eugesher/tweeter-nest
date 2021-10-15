@@ -56,6 +56,43 @@ export class TweetsService {
     }
   }
 
+  private async addRetweets(
+    tweets: Tweet[],
+    currentUser: User,
+    queryBuilder: SelectQueryBuilder<Tweet>,
+  ) {
+    const retweets = await this.retweetRepository.find({
+      user: currentUser,
+    });
+    const retweetedTweetsIds = retweets.map((retweet) => retweet.tweetId);
+
+    queryBuilder.where('tweets.id IN (:...retweetIds)', {
+      retweetIds: retweetedTweetsIds,
+    });
+
+    let retweetedTweets = await queryBuilder.getMany();
+    retweetedTweets = retweetedTweets.map((rt) => {
+      const foundRt = retweets.find((r) => r.tweetId === rt.id);
+      const createdAt = foundRt && foundRt.createdAt;
+      if (createdAt) {
+        return { ...rt, createdAt };
+      } else {
+        return rt;
+      }
+    });
+
+    tweets.push(...retweetedTweets);
+    tweets.sort((a, b) => {
+      if (a.createdAt < b.createdAt) {
+        return 1;
+      } else if (a.createdAt > b.createdAt) {
+        return -1;
+      } else {
+        return 0;
+      }
+    });
+  }
+
   async create(dto: CreateTweetDto, currentUser: User): Promise<Tweet> {
     const tweet = new Tweet();
     Object.assign(tweet, dto);
@@ -85,11 +122,13 @@ export class TweetsService {
     username: string,
     query: IFindTweetsQuery,
     currentUser: User,
+    options = { withRetweets: false },
   ): Promise<Tweet[]> {
     const author =
       username === currentUser.username
         ? currentUser
         : await this.userRepository.findOne({ username });
+
     const queryBuilder = getRepository(Tweet)
       .createQueryBuilder('tweets')
       .leftJoin('tweets.author', 'author')
@@ -100,12 +139,18 @@ export class TweetsService {
         'author.lastName',
         'author.image',
       ])
-      .andWhere('tweets.author_id = :id', { id: author.id })
-      .orderBy('tweets.createdAt', 'DESC');
+      .where('tweets.author_id = :id', { id: author.id })
+      .orderBy({ 'tweets.created_at': 'DESC' });
+
+    const tweets = await queryBuilder.getMany();
+
+    if (options.withRetweets) {
+      await this.addRetweets(tweets, currentUser, queryBuilder);
+    }
 
     TweetsService.handleQuery(query, queryBuilder);
 
-    return await queryBuilder.getMany();
+    return tweets;
   }
 
   async remove(id: string, currentUserId: string): Promise<DeleteResult> {
