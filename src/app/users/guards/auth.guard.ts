@@ -4,7 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ExpressRequestInterface } from '../../../types/express-request.interface';
+import { ExpressRequestInterface } from '../../../interfaces/express-request.interface';
 import { AUTH_REQUIRED } from '../constants/users.constants';
 
 Injectable();
