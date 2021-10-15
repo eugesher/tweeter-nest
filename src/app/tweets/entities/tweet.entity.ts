@@ -21,11 +21,11 @@ export class Tweet {
   @Column({ nullable: true })
   image: string;
 
-  @OneToMany(() => Retweet, (retweet) => retweet.tweet)
-  retweets: Retweet[];
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
+
+  @OneToMany(() => Retweet, (retweet) => retweet.tweet)
+  retweets: Retweet[];
 
   @ManyToOne(() => User, (user) => user.tweets, { eager: true })
   @JoinColumn({ name: 'author_id' })
