@@ -57,9 +57,27 @@ export class TweetsController {
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
   ): Promise<Tweet[]> {
-    return await this.tweetsService.findByAuthor(username, query, currentUser, {
-      withRetweets: true,
-    });
+    return await this.tweetsService.findByAuthor(
+      username,
+      query,
+      currentUser,
+      'with_retweets',
+    );
+  }
+
+  @Get(':username/media')
+  @UseGuards(AuthGuard)
+  async findByAuthorWithMedia(
+    @Param('username') username: string,
+    @Query('') query: IFindTweetsQuery,
+    @CurrentUser() currentUser: User,
+  ): Promise<Tweet[]> {
+    return await this.tweetsService.findByAuthor(
+      username,
+      query,
+      currentUser,
+      'media',
+    );
   }
 
   @Delete(':id')

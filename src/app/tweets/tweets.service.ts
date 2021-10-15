@@ -23,6 +23,7 @@ import {
   NOT_FOUND,
   OWN_TWEET,
 } from './constants/tweets.constants';
+import { TweetsFilter } from './types/tweets-filter.type';
 
 @Injectable()
 export class TweetsService {
@@ -148,7 +149,7 @@ export class TweetsService {
     username: string,
     query: IFindTweetsQuery,
     currentUser: User,
-    options = { withRetweets: false },
+    filter?: TweetsFilter,
   ): Promise<Tweet[]> {
     const author =
       username === currentUser.username
@@ -162,8 +163,12 @@ export class TweetsService {
 
     let tweets = await queryBuilder.getMany();
 
-    if (options.withRetweets) {
+    if (filter === 'with_retweets') {
       tweets = await this.addRetweets(tweets, currentUser, queryBuilder);
+    }
+
+    if (filter === 'media') {
+      tweets = tweets.filter((tweet) => tweet.image);
     }
 
     tweets = this.setIsRetweeted(tweets, currentUser);
