@@ -18,12 +18,12 @@ import { User } from '../users/entities/user.entity';
 import { CreateTweetDto } from './dto/create-tweet.dto';
 import { ITweetResponse } from './interfaces/tweet-response.interface';
 import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
+import { TweetsFilter } from './types/tweets-filter.type';
 import {
   DELETE_FORBIDDEN,
   NOT_FOUND,
   OWN_TWEET,
 } from './constants/tweets.constants';
-import { TweetsFilter } from './types/tweets-filter.type';
 
 @Injectable()
 export class TweetsService {
@@ -75,19 +75,7 @@ export class TweetsService {
     });
   }
 
-  private async findOne(
-    id: string,
-    options?: FindOneOptions<Tweet>,
-  ): Promise<Tweet> {
-    const tweet = await this.tweetRepository.findOne(id, options);
-    if (!tweet) {
-      throw new NotFoundException(NOT_FOUND);
-    } else {
-      return tweet;
-    }
-  }
-
-  private async addRetweets(
+  private async setRetweets(
     tweets: Tweet[],
     currentUser: User,
     queryBuilder: SelectQueryBuilder<Tweet>,
@@ -126,6 +114,18 @@ export class TweetsService {
     return tweets;
   }
 
+  private async findOne(
+    id: string,
+    options?: FindOneOptions<Tweet>,
+  ): Promise<Tweet> {
+    const tweet = await this.tweetRepository.findOne(id, options);
+    if (!tweet) {
+      throw new NotFoundException(NOT_FOUND);
+    } else {
+      return tweet;
+    }
+  }
+
   async create(
     dto: CreateTweetDto,
     currentUser: User,
@@ -162,7 +162,7 @@ export class TweetsService {
     let tweets = await queryBuilder.getMany();
 
     if (filter === 'with_retweets') {
-      tweets = await this.addRetweets(tweets, currentUser, queryBuilder);
+      tweets = await this.setRetweets(tweets, currentUser, queryBuilder);
     }
 
     if (filter === 'media') {
