@@ -11,10 +11,11 @@ import {
 import { TweetsService } from './tweets.service';
 import { CreateTweetDto } from './dto/create-tweet.dto';
 import { AuthGuard } from '../users/guards/auth.guard';
-import { Tweet } from './entities/tweet.entity';
 import { User } from '../users/entities/user.entity';
 import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
 import { CurrentUser } from '../users/decorators/current-user.decorator';
+import { ITweetResponse } from './interfaces/tweet-response.interface';
+import { DeleteResult } from 'typeorm';
 
 @Controller('tweets')
 export class TweetsController {
@@ -25,14 +26,17 @@ export class TweetsController {
   async create(
     @Body() dto: CreateTweetDto,
     @CurrentUser() currentUser: User,
-  ): Promise<Tweet> {
+  ): Promise<ITweetResponse> {
     return await this.tweetsService.create(dto, currentUser);
   }
 
   @Get()
   @UseGuards(AuthGuard)
-  async findAll(@Query('') query: IFindTweetsQuery): Promise<Tweet[]> {
-    return await this.tweetsService.findAll(query);
+  async findAll(
+    @Query('') query: IFindTweetsQuery,
+    @CurrentUser() currentUser: User,
+  ): Promise<ITweetResponse[]> {
+    return await this.tweetsService.findAll(query, currentUser);
   }
 
   @Get(':username')
@@ -41,7 +45,7 @@ export class TweetsController {
     @Param('username') username: string,
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
-  ): Promise<Tweet[]> {
+  ): Promise<ITweetResponse[]> {
     return await this.tweetsService.findByAuthor(username, query, currentUser);
   }
 
@@ -51,7 +55,7 @@ export class TweetsController {
     @Param('username') username: string,
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
-  ): Promise<Tweet[]> {
+  ): Promise<ITweetResponse[]> {
     return await this.tweetsService.findByAuthor(username, query, currentUser, {
       withRetweets: true,
     });
@@ -62,7 +66,7 @@ export class TweetsController {
   async remove(
     @Param('id') id: string,
     @CurrentUser('id') currentUserId: string,
-  ) {
+  ): Promise<DeleteResult> {
     return this.tweetsService.remove(id, currentUserId);
   }
 
@@ -71,7 +75,7 @@ export class TweetsController {
   async createRetweet(
     @Param('id') id: string,
     @CurrentUser() currentUser: User,
-  ): Promise<Tweet> {
+  ): Promise<ITweetResponse> {
     return await this.tweetsService.createRetweet(id, currentUser);
   }
 
@@ -80,7 +84,7 @@ export class TweetsController {
   async removeRetweet(
     @Param('id') id: string,
     @CurrentUser() currentUser: User,
-  ): Promise<Tweet> {
+  ): Promise<ITweetResponse> {
     return await this.tweetsService.removeRetweet(id, currentUser);
   }
 }

@@ -21,7 +21,8 @@ import {
   NOT_FOUND,
   OWN_TWEET,
 } from './constants/tweets.constants';
-import { TweetResponseInterface } from './interfaces/tweet-response.interface';
+import { ITweetResponse } from './interfaces/tweet-response.interface';
+import { FindOneOptions } from 'typeorm/find-options/FindOneOptions';
 
 @Injectable()
 export class TweetsService {
@@ -34,10 +35,24 @@ export class TweetsService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  private static handleQuery(
+  private static getQueryBuilder(
     query: IFindTweetsQuery,
-    queryBuilder: SelectQueryBuilder<Tweet>,
-  ): void {
+  ): SelectQueryBuilder<Tweet> {
+    const queryBuilder = getRepository(Tweet)
+      .createQueryBuilder('tweets')
+      .loadRelationCountAndMap('tweets.retweetsCount', 'tweets.retweets')
+      .leftJoin('tweets.retweets', 'retweets')
+      .addSelect('retweets.userId')
+      .leftJoin('tweets.author', 'author')
+      .addSelect([
+        'author.id',
+        'author.username',
+        'author.firstName',
+        'author.lastName',
+        'author.image',
+      ])
+      .orderBy('tweets.createdAt', 'DESC');
+
     if (query.limit) {
       queryBuilder.limit(query.limit);
     }
@@ -45,10 +60,25 @@ export class TweetsService {
     if (query.offset) {
       queryBuilder.offset(query.offset);
     }
+
+    return queryBuilder;
   }
 
-  private async findOne(id: string): Promise<Tweet> {
-    const tweet = await this.tweetRepository.findOne(id);
+  private setIsRetweeted(tweets: Tweet[], currentUser: User): ITweetResponse[] {
+    return tweets.map((tweet) => {
+      if (tweet.retweets.some((retweet) => (retweet.userId = currentUser.id))) {
+        return { ...tweet, isRetweeted: true };
+      } else {
+        return { ...tweet, isRetweeted: false };
+      }
+    });
+  }
+
+  private async findOne(
+    id: string,
+    options?: FindOneOptions<Tweet>,
+  ): Promise<Tweet> {
+    const tweet = await this.tweetRepository.findOne(id, options);
     if (!tweet) {
       throw new NotFoundException(NOT_FOUND);
     } else {
@@ -60,7 +90,7 @@ export class TweetsService {
     tweets: Tweet[],
     currentUser: User,
     queryBuilder: SelectQueryBuilder<Tweet>,
-  ) {
+  ): Promise<ITweetResponse[]> {
     const retweets = await this.retweetRepository.find({
       user: currentUser,
     });
@@ -91,31 +121,30 @@ export class TweetsService {
         return 0;
       }
     });
+
+    return tweets;
   }
 
-  async create(dto: CreateTweetDto, currentUser: User): Promise<Tweet> {
-    const tweet = new Tweet();
+  async create(
+    dto: CreateTweetDto,
+    currentUser: User,
+  ): Promise<ITweetResponse> {
+    const tweet = new Tweet() as ITweetResponse;
     Object.assign(tweet, dto);
     tweet.author = currentUser;
+    tweet.retweetsCount = 0;
+    tweet.isRetweeted = false;
     return await this.tweetRepository.save(tweet);
   }
 
-  async findAll(query: IFindTweetsQuery): Promise<Tweet[]> {
-    const queryBuilder = getRepository(Tweet)
-      .createQueryBuilder('tweets')
-      .leftJoin('tweets.author', 'author')
-      .addSelect([
-        'author.id',
-        'author.username',
-        'author.firstName',
-        'author.lastName',
-        'author.image',
-      ])
-      .orderBy('tweets.createdAt', 'DESC');
-
-    TweetsService.handleQuery(query, queryBuilder);
-
-    return await queryBuilder.getMany();
+  async findAll(
+    query: IFindTweetsQuery,
+    currentUser: User,
+  ): Promise<ITweetResponse[]> {
+    const queryBuilder = TweetsService.getQueryBuilder(query);
+    let tweets = await queryBuilder.getMany();
+    tweets = this.setIsRetweeted(tweets, currentUser);
+    return tweets;
   }
 
   async findByAuthor(
@@ -123,32 +152,24 @@ export class TweetsService {
     query: IFindTweetsQuery,
     currentUser: User,
     options = { withRetweets: false },
-  ): Promise<Tweet[]> {
+  ): Promise<ITweetResponse[]> {
     const author =
       username === currentUser.username
         ? currentUser
         : await this.userRepository.findOne({ username });
 
-    const queryBuilder = getRepository(Tweet)
-      .createQueryBuilder('tweets')
-      .leftJoin('tweets.author', 'author')
-      .addSelect([
-        'author.id',
-        'author.username',
-        'author.firstName',
-        'author.lastName',
-        'author.image',
-      ])
-      .where('tweets.author_id = :id', { id: author.id })
-      .orderBy({ 'tweets.created_at': 'DESC' });
+    const queryBuilder = TweetsService.getQueryBuilder(query).where(
+      'tweets.author_id = :id',
+      { id: author.id },
+    );
 
-    const tweets = await queryBuilder.getMany();
+    let tweets = await queryBuilder.getMany();
 
     if (options.withRetweets) {
-      await this.addRetweets(tweets, currentUser, queryBuilder);
+      tweets = await this.addRetweets(tweets, currentUser, queryBuilder);
     }
 
-    TweetsService.handleQuery(query, queryBuilder);
+    tweets = this.setIsRetweeted(tweets, currentUser);
 
     return tweets;
   }
@@ -162,15 +183,12 @@ export class TweetsService {
     }
   }
 
-  async createRetweet(
-    id: string,
-    currentUser: User,
-  ): Promise<TweetResponseInterface> {
+  async createRetweet(id: string, currentUser: User): Promise<ITweetResponse> {
     if (await this.tweetRepository.findOne({ id, author: currentUser })) {
       throw new BadRequestException(OWN_TWEET);
     }
 
-    const tweet = await this.findOne(id);
+    const tweet = await this.findOne(id, { relations: ['retweets'] });
     let retweet = await this.retweetRepository.findOne({
       user: currentUser,
       tweet: tweet,
@@ -180,24 +198,23 @@ export class TweetsService {
       retweet = new Retweet();
       retweet.user = currentUser;
       retweet.tweet = tweet;
-      tweet.retweetsCount++;
       await this.retweetRepository.save(retweet);
       await this.tweetRepository.save(tweet);
     }
 
-    return { ...tweet, isRetweeted: true };
+    return {
+      ...tweet,
+      retweetsCount: tweet.retweets.length,
+      isRetweeted: true,
+    };
   }
 
-  async removeRetweet(
-    id: string,
-    currentUser: User,
-  ): Promise<TweetResponseInterface> {
+  async removeRetweet(id: string, currentUser: User): Promise<ITweetResponse> {
     if (await this.tweetRepository.findOne({ id, author: currentUser })) {
       throw new BadRequestException(OWN_TWEET);
     }
 
     const tweet = await this.findOne(id);
-    tweet.retweetsCount--;
 
     await this.retweetRepository.delete({
       user: currentUser,
@@ -205,6 +222,10 @@ export class TweetsService {
     });
     await this.tweetRepository.save(tweet);
 
-    return { ...tweet, isRetweeted: false };
+    return {
+      ...tweet,
+      retweetsCount: tweet.retweets.length,
+      isRetweeted: false,
+    };
   }
 }

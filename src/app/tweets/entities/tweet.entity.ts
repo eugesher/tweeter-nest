@@ -21,10 +21,7 @@ export class Tweet {
   @Column({ nullable: true })
   image: string;
 
-  @Column({ name: 'retweets_count', default: 0 })
-  retweetsCount: number;
-
-  @OneToMany(() => Retweet, (retweet) => retweet.user)
+  @OneToMany(() => Retweet, (retweet) => retweet.tweet)
   retweets: Retweet[];
 
   @CreateDateColumn({ name: 'created_at' })
