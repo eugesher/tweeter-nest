@@ -134,7 +134,6 @@ export class TweetsService {
     Object.assign(tweet, dto);
     tweet.author = currentUser;
     tweet.retweetsCount = 0;
-    tweet.isRetweeted = false;
     return await this.tweetRepository.save(tweet);
   }
 
@@ -155,7 +154,6 @@ export class TweetsService {
       username === currentUser.username
         ? currentUser
         : await this.userRepository.findOne({ username });
-
     const queryBuilder = TweetsService.getQueryBuilder(query).where(
       'tweets.author_id = :id',
       { id: author.id },
