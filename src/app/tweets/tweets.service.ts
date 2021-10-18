@@ -58,7 +58,7 @@ export class TweetsService {
     }
 
     if (query.offset) {
-      queryBuilder.offset(query.offset);
+      queryBuilder.skip(query.offset);
     }
 
     return queryBuilder;
