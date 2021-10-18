@@ -76,12 +76,10 @@ export class TweetsService {
 
   private async setRetweets(
     tweets: Tweet[],
-    currentUser: User,
+    user: User,
     queryBuilder: SelectQueryBuilder<Tweet>,
   ): Promise<Tweet[]> {
-    const retweets = await this.retweetRepository.find({
-      user: currentUser,
-    });
+    const retweets = await this.retweetRepository.find({ user });
 
     if (!retweets.length) {
       return [];
@@ -166,7 +164,7 @@ export class TweetsService {
     let tweets = await queryBuilder.getMany();
 
     if (options.withRetweets) {
-      tweets = await this.setRetweets(tweets, currentUser, queryBuilder);
+      tweets = await this.setRetweets(tweets, author, queryBuilder);
     }
 
     return tweets;
