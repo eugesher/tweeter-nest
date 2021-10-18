@@ -29,7 +29,7 @@ export class Tweet {
   retweets: Retweet[];
 
   @OneToMany(() => TweetLike, (tweetLike) => tweetLike.tweet)
-  tweetLikes: TweetLike[];
+  likes: TweetLike[];
 
   @ManyToOne(() => User, (user) => user.tweets, { eager: true })
   @JoinColumn({ name: 'author_id' })

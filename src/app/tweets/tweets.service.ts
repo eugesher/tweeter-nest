@@ -33,7 +33,7 @@ export class TweetsService {
     @InjectRepository(Retweet)
     private readonly retweetRepository: Repository<Retweet>,
     @InjectRepository(TweetLike)
-    private readonly likeRepository: Repository<TweetLike>,
+    private readonly tweetLikeRepository: Repository<TweetLike>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
@@ -246,13 +246,13 @@ export class TweetsService {
       throw new BadRequestException(OWN_TWEET);
     }
 
-    const tweet = await this.findOne(id, { relations: ['tweetLikes'] });
+    const tweet = await this.findOne(id, { relations: ['likes'] });
 
-    let like = await this.likeRepository.findOne({
+    let like = await this.tweetLikeRepository.findOne({
       user: currentUser,
       tweet: tweet,
     });
-    let likesCount = tweet.tweetLikes.length;
+    let likesCount = tweet.likes.length;
 
     if (!like) {
       like = new TweetLike();
@@ -260,13 +260,34 @@ export class TweetsService {
       like.tweet = tweet;
       likesCount++;
       await this.tweetRepository.save(tweet);
-      await this.likeRepository.save(like);
+      await this.tweetLikeRepository.save(like);
     }
 
     return {
       ...tweet,
       likesCount,
       isLiked: true,
+    };
+  }
+
+  async unlike(id: string, currentUser: User): Promise<ITweetResponse> {
+    if (await this.tweetRepository.findOne({ id, author: currentUser })) {
+      throw new BadRequestException(OWN_TWEET);
+    }
+
+    const tweet = await this.findOne(id, { relations: ['likes'] });
+    const likesCount = tweet.likes.length - 1;
+
+    await this.tweetLikeRepository.delete({
+      user: currentUser,
+      tweet: tweet,
+    });
+    await this.tweetRepository.save(tweet);
+
+    return {
+      ...tweet,
+      likesCount,
+      isLiked: false,
     };
   }
 }

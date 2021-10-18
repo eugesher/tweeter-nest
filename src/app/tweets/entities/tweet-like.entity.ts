@@ -20,7 +20,7 @@ export class TweetLike {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Tweet, (tweet) => tweet.tweetLikes)
+  @ManyToOne(() => Tweet, (tweet) => tweet.likes)
   @JoinColumn({ name: 'tweet_id' })
   tweet: Tweet;
 
