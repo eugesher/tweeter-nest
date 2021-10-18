@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Retweet } from './retweet.entity';
+import { Like } from './like.entity';
 
 @Entity('tweets')
 export class Tweet {
@@ -26,6 +27,9 @@ export class Tweet {
 
   @OneToMany(() => Retweet, (retweet) => retweet.tweet)
   retweets: Retweet[];
+
+  @OneToMany(() => Like, (like) => like.tweet)
+  likes: Like[];
 
   @ManyToOne(() => User, (user) => user.tweets, { eager: true })
   @JoinColumn({ name: 'author_id' })
