@@ -55,7 +55,7 @@ export class TweetsService {
       .orderBy('tweets.createdAt', 'DESC');
 
     if (query.limit) {
-      queryBuilder.limit(query.limit);
+      queryBuilder.take(query.limit);
     }
 
     if (query.offset) {
