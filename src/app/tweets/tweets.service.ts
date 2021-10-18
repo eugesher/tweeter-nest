@@ -7,11 +7,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   DeleteResult,
+  FindConditions,
+  FindOneOptions,
   getRepository,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
-import { FindOneOptions } from 'typeorm/find-options/FindOneOptions';
 import { Tweet } from './entities/tweet.entity';
 import { Retweet } from './entities/retweet.entity';
 import { TweetLike } from './entities/tweet-like.entity';
@@ -23,8 +24,10 @@ import { IRetweetResponse } from './interfaces/retweet-response.interface';
 import { ITweetLikeResponse } from './interfaces/tweet-like-response.interface';
 import {
   DELETE_FORBIDDEN,
+  LIKE_NOT_FOUND,
   NOT_FOUND,
   OWN_TWEET,
+  RETWEET_NOT_FOUND,
 } from './constants/tweets.constants';
 
 @Injectable()
@@ -128,10 +131,35 @@ export class TweetsService {
     options?: FindOneOptions<Tweet>,
   ): Promise<Tweet> {
     const tweet = await this.tweetRepository.findOne(id, options);
+
     if (!tweet) {
       throw new NotFoundException(NOT_FOUND);
     } else {
       return tweet;
+    }
+  }
+
+  private async findRetweet(
+    conditions: FindConditions<Retweet>,
+  ): Promise<Retweet> {
+    const retweet = await this.retweetRepository.findOne(conditions);
+
+    if (!retweet) {
+      throw new NotFoundException(RETWEET_NOT_FOUND);
+    } else {
+      return retweet;
+    }
+  }
+
+  private async findTweetLike(
+    conditions: FindConditions<TweetLike>,
+  ): Promise<TweetLike> {
+    const like = await this.tweetLikeRepository.findOne(conditions);
+
+    if (!like) {
+      throw new NotFoundException(LIKE_NOT_FOUND);
+    } else {
+      return like;
     }
   }
 
@@ -258,7 +286,7 @@ export class TweetsService {
 
     const tweet = await this.findOne(id, { relations: ['retweets'] });
 
-    let retweet = await this.retweetRepository.findOne({
+    let retweet = await this.findRetweet({
       user: currentUser,
       tweet: tweet,
     });
@@ -311,7 +339,7 @@ export class TweetsService {
 
     const tweet = await this.findOne(id, { relations: ['likes'] });
 
-    let like = await this.tweetLikeRepository.findOne({
+    let like = await this.findTweetLike({
       user: currentUser,
       tweet: tweet,
     });
