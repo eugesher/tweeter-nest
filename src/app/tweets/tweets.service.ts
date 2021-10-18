@@ -194,22 +194,25 @@ export class TweetsService {
     }
 
     const tweet = await this.findOne(id, { relations: ['retweets'] });
+
     let retweet = await this.retweetRepository.findOne({
       user: currentUser,
       tweet: tweet,
     });
+    let retweetsCount = tweet.retweets.length;
 
     if (!retweet) {
       retweet = new Retweet();
       retweet.user = currentUser;
       retweet.tweet = tweet;
+      retweetsCount++;
       await this.tweetRepository.save(tweet);
       await this.retweetRepository.save(retweet);
     }
 
     return {
       ...tweet,
-      retweetsCount: tweet.retweets.length,
+      retweetsCount,
       isRetweeted: true,
     };
   }
@@ -220,6 +223,7 @@ export class TweetsService {
     }
 
     const tweet = await this.findOne(id, { relations: ['retweets'] });
+    const retweetsCount = tweet.retweets.length - 1;
 
     await this.retweetRepository.delete({
       user: currentUser,
@@ -229,7 +233,7 @@ export class TweetsService {
 
     return {
       ...tweet,
-      retweetsCount: tweet.retweets.length,
+      retweetsCount,
       isRetweeted: false,
     };
   }

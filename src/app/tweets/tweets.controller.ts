@@ -111,7 +111,9 @@ export class TweetsController {
     @Param('id') id: string,
     @CurrentUser() currentUser: User,
   ): Promise<ITweetResponse> {
-    return await this.tweetsService.createRetweet(id, currentUser);
+    const tweet = await this.tweetsService.createRetweet(id, currentUser);
+    delete tweet.retweets;
+    return tweet;
   }
 
   @Delete(':id/retweet')
@@ -120,6 +122,8 @@ export class TweetsController {
     @Param('id') id: string,
     @CurrentUser() currentUser: User,
   ): Promise<ITweetResponse> {
-    return await this.tweetsService.removeRetweet(id, currentUser);
+    const tweet = await this.tweetsService.removeRetweet(id, currentUser);
+    delete tweet.retweets;
+    return tweet;
   }
 }
