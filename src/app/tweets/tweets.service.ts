@@ -14,16 +14,18 @@ import {
 import { FindOneOptions } from 'typeorm/find-options/FindOneOptions';
 import { Tweet } from './entities/tweet.entity';
 import { Retweet } from './entities/retweet.entity';
+import { TweetLike } from './entities/tweet-like.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateTweetDto } from './dto/create-tweet.dto';
-import { ITweetResponse } from './interfaces/tweet-response.interface';
 import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
+import { ITweetResponse } from './interfaces/tweet-response.interface';
+import { IRetweetResponse } from './interfaces/retweet-response.interface';
+import { ITweetLikeResponse } from './interfaces/tweet-like-response.interface';
 import {
   DELETE_FORBIDDEN,
   NOT_FOUND,
   OWN_TWEET,
 } from './constants/tweets.constants';
-import { TweetLike } from './entities/tweet-like.entity';
 
 @Injectable()
 export class TweetsService {
@@ -47,6 +49,8 @@ export class TweetsService {
       .loadRelationCountAndMap('tweets.likesCount', 'tweets.likes')
       .leftJoin('tweets.retweets', 'retweets')
       .addSelect('retweets.userId')
+      .leftJoin('tweets.likes', 'likes')
+      .addSelect('likes.userId')
       .leftJoin('tweets.author', 'author')
       .addSelect([
         'author.id',
@@ -131,7 +135,10 @@ export class TweetsService {
     }
   }
 
-  setIsRetweeted(tweets: Tweet[], currentUser: User): Tweet[] {
+  setIsRetweeted(
+    tweets: Tweet[],
+    currentUser: User,
+  ): (Tweet & { isRetweeted: boolean })[] {
     return tweets.map((tweet) => {
       if (tweet.retweets.some((retweet) => retweet.userId === currentUser.id)) {
         return { ...tweet, isRetweeted: true };
@@ -141,6 +148,29 @@ export class TweetsService {
     });
   }
 
+  setIsLiked(
+    tweets: Tweet[],
+    currentUser: User,
+  ): (Tweet & { isLiked: boolean })[] {
+    return tweets.map((tweet) => {
+      if (tweet.likes.some((like) => like.userId === currentUser.id)) {
+        return { ...tweet, isLiked: true };
+      } else {
+        return { ...tweet, isLiked: false };
+      }
+    });
+  }
+
+  buildTweetsResponse(tweets: Tweet[], currentUser: User): Tweet[] {
+    tweets = this.setIsRetweeted(tweets, currentUser);
+    tweets = this.setIsLiked(tweets, currentUser);
+    tweets.forEach((tweet) => {
+      delete tweet.retweets;
+      delete tweet.likes;
+    });
+    return tweets;
+  }
+
   async create(
     dto: CreateTweetDto,
     currentUser: User,
@@ -148,6 +178,7 @@ export class TweetsService {
     const tweet = new Tweet() as ITweetResponse;
     Object.assign(tweet, dto);
     tweet.author = currentUser;
+    tweet.likesCount = 0;
     tweet.retweetsCount = 0;
     return await this.tweetRepository.save(tweet);
   }
@@ -183,6 +214,31 @@ export class TweetsService {
     return tweets;
   }
 
+  async findLikedByUser(
+    username: string,
+    query: IFindTweetsQuery,
+    currentUser: User,
+  ): Promise<Tweet[]> {
+    const user =
+      username === currentUser.username
+        ? currentUser
+        : await this.userRepository.findOne({ username });
+    const likes = await this.tweetLikeRepository.find({ user });
+
+    if (!likes.length) {
+      return [];
+    }
+
+    const likedTweetsIds = likes.map((like) => like.tweetId);
+
+    const queryBuilder = TweetsService.getQueryBuilder(query).where(
+      'tweets.id IN (:...likedTweetsIds)',
+      { likedTweetsIds },
+    );
+
+    return await queryBuilder.getMany();
+  }
+
   async remove(id: string, currentUserId: string): Promise<DeleteResult> {
     const tweet = await this.findOne(id);
     if (tweet.author.id !== currentUserId) {
@@ -192,7 +248,10 @@ export class TweetsService {
     }
   }
 
-  async createRetweet(id: string, currentUser: User): Promise<ITweetResponse> {
+  async createRetweet(
+    id: string,
+    currentUser: User,
+  ): Promise<IRetweetResponse> {
     if (await this.tweetRepository.findOne({ id, author: currentUser })) {
       throw new BadRequestException(OWN_TWEET);
     }
@@ -221,7 +280,10 @@ export class TweetsService {
     };
   }
 
-  async removeRetweet(id: string, currentUser: User): Promise<ITweetResponse> {
+  async removeRetweet(
+    id: string,
+    currentUser: User,
+  ): Promise<IRetweetResponse> {
     if (await this.tweetRepository.findOne({ id, author: currentUser })) {
       throw new BadRequestException(OWN_TWEET);
     }
@@ -242,7 +304,7 @@ export class TweetsService {
     };
   }
 
-  async like(id: string, currentUser: User): Promise<ITweetResponse> {
+  async like(id: string, currentUser: User): Promise<ITweetLikeResponse> {
     if (await this.tweetRepository.findOne({ id, author: currentUser })) {
       throw new BadRequestException(OWN_TWEET);
     }
@@ -271,7 +333,7 @@ export class TweetsService {
     };
   }
 
-  async unlike(id: string, currentUser: User): Promise<ITweetResponse> {
+  async unlike(id: string, currentUser: User): Promise<ITweetLikeResponse> {
     if (await this.tweetRepository.findOne({ id, author: currentUser })) {
       throw new BadRequestException(OWN_TWEET);
     }

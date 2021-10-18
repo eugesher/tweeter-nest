@@ -1,12 +1,12 @@
 import {
-  Controller,
-  Post,
   Body,
-  UseGuards,
-  Query,
-  Get,
+  Controller,
   Delete,
+  Get,
   Param,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { TweetsService } from './tweets.service';
@@ -15,8 +15,10 @@ import { AuthGuard } from '../users/guards/auth.guard';
 import { Tweet } from './entities/tweet.entity';
 import { User } from '../users/entities/user.entity';
 import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
-import { CurrentUser } from '../users/decorators/current-user.decorator';
 import { ITweetResponse } from './interfaces/tweet-response.interface';
+import { ITweetLikeResponse } from './interfaces/tweet-like-response.interface';
+import { IRetweetResponse } from './interfaces/retweet-response.interface';
+import { CurrentUser } from '../users/decorators/current-user.decorator';
 
 @Controller('tweets')
 export class TweetsController {
@@ -37,10 +39,8 @@ export class TweetsController {
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
   ): Promise<Tweet[]> {
-    let tweets = await this.tweetsService.findAll(query, currentUser);
-    tweets = this.tweetsService.setIsRetweeted(tweets, currentUser);
-    tweets.forEach((tweet) => delete tweet.retweets);
-    return tweets;
+    const tweets = await this.tweetsService.findAll(query, currentUser);
+    return this.tweetsService.buildTweetsResponse(tweets, currentUser);
   }
 
   @Get(':username')
@@ -50,14 +50,12 @@ export class TweetsController {
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
   ): Promise<Tweet[]> {
-    let tweets = await this.tweetsService.findByAuthor(
+    const tweets = await this.tweetsService.findByAuthor(
       username,
       query,
       currentUser,
     );
-    tweets = this.tweetsService.setIsRetweeted(tweets, currentUser);
-    tweets.forEach((tweet) => delete tweet.retweets);
-    return tweets;
+    return this.tweetsService.buildTweetsResponse(tweets, currentUser);
   }
 
   @Get(':username/with_retweets')
@@ -67,15 +65,13 @@ export class TweetsController {
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
   ): Promise<Tweet[]> {
-    let tweets = await this.tweetsService.findByAuthor(
+    const tweets = await this.tweetsService.findByAuthor(
       username,
       query,
       currentUser,
       { withRetweets: true },
     );
-    tweets = this.tweetsService.setIsRetweeted(tweets, currentUser);
-    tweets.forEach((tweet) => delete tweet.retweets);
-    return tweets;
+    return this.tweetsService.buildTweetsResponse(tweets, currentUser);
   }
 
   @Get(':username/media')
@@ -91,9 +87,22 @@ export class TweetsController {
       currentUser,
     );
     tweets = tweets.filter((tweet) => tweet.image);
-    tweets = this.tweetsService.setIsRetweeted(tweets, currentUser);
-    tweets.forEach((tweet) => delete tweet.retweets);
-    return tweets;
+    return this.tweetsService.buildTweetsResponse(tweets, currentUser);
+  }
+
+  @Get(':username/likes')
+  @UseGuards(AuthGuard)
+  async findLikedByUser(
+    @Param('username') username: string,
+    @Query('') query: IFindTweetsQuery,
+    @CurrentUser() currentUser: User,
+  ): Promise<Tweet[]> {
+    const tweets = await this.tweetsService.findLikedByUser(
+      username,
+      query,
+      currentUser,
+    );
+    return this.tweetsService.buildTweetsResponse(tweets, currentUser);
   }
 
   @Delete(':id')
@@ -110,9 +119,10 @@ export class TweetsController {
   async createRetweet(
     @Param('id') id: string,
     @CurrentUser() currentUser: User,
-  ): Promise<ITweetResponse> {
+  ): Promise<IRetweetResponse> {
     const tweet = await this.tweetsService.createRetweet(id, currentUser);
     delete tweet.retweets;
+    delete tweet.likes;
     return tweet;
   }
 
@@ -121,9 +131,10 @@ export class TweetsController {
   async removeRetweet(
     @Param('id') id: string,
     @CurrentUser() currentUser: User,
-  ): Promise<ITweetResponse> {
+  ): Promise<IRetweetResponse> {
     const tweet = await this.tweetsService.removeRetweet(id, currentUser);
     delete tweet.retweets;
+    delete tweet.likes;
     return tweet;
   }
 
@@ -132,8 +143,9 @@ export class TweetsController {
   async like(
     @Param('id') id: string,
     @CurrentUser() currentUser: User,
-  ): Promise<ITweetResponse> {
+  ): Promise<ITweetLikeResponse> {
     const tweet = await this.tweetsService.like(id, currentUser);
+    delete tweet.retweets;
     delete tweet.likes;
     return tweet;
   }
@@ -143,8 +155,9 @@ export class TweetsController {
   async unlike(
     @Param('id') id: string,
     @CurrentUser() currentUser: User,
-  ): Promise<ITweetResponse> {
+  ): Promise<ITweetLikeResponse> {
     const tweet = await this.tweetsService.unlike(id, currentUser);
+    delete tweet.retweets;
     delete tweet.likes;
     return tweet;
   }
