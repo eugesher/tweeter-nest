@@ -67,7 +67,7 @@ export class TweetsService {
 
   private setIsRetweeted(tweets: Tweet[], currentUser: User): Tweet[] {
     return tweets.map((tweet) => {
-      if (tweet.retweets.some((retweet) => (retweet.userId = currentUser.id))) {
+      if (tweet.retweets.some((retweet) => retweet.userId === currentUser.id)) {
         return { ...tweet, isRetweeted: true };
       } else {
         return { ...tweet, isRetweeted: false };
