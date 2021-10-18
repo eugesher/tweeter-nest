@@ -214,7 +214,7 @@ export class TweetsService {
       throw new BadRequestException(OWN_TWEET);
     }
 
-    const tweet = await this.findOne(id);
+    const tweet = await this.findOne(id, { relations: ['retweets'] });
 
     await this.retweetRepository.delete({
       user: currentUser,
