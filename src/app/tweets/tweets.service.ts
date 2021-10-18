@@ -23,6 +23,7 @@ import {
   NOT_FOUND,
   OWN_TWEET,
 } from './constants/tweets.constants';
+import { TweetLike } from './entities/tweet-like.entity';
 
 @Injectable()
 export class TweetsService {
@@ -31,6 +32,8 @@ export class TweetsService {
     private readonly tweetRepository: Repository<Tweet>,
     @InjectRepository(Retweet)
     private readonly retweetRepository: Repository<Retweet>,
+    @InjectRepository(TweetLike)
+    private readonly likeRepository: Repository<TweetLike>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
@@ -235,6 +238,35 @@ export class TweetsService {
       ...tweet,
       retweetsCount,
       isRetweeted: false,
+    };
+  }
+
+  async like(id: string, currentUser: User): Promise<ITweetResponse> {
+    if (await this.tweetRepository.findOne({ id, author: currentUser })) {
+      throw new BadRequestException(OWN_TWEET);
+    }
+
+    const tweet = await this.findOne(id, { relations: ['tweetLikes'] });
+
+    let like = await this.likeRepository.findOne({
+      user: currentUser,
+      tweet: tweet,
+    });
+    let likesCount = tweet.tweetLikes.length;
+
+    if (!like) {
+      like = new TweetLike();
+      like.user = currentUser;
+      like.tweet = tweet;
+      likesCount++;
+      await this.tweetRepository.save(tweet);
+      await this.likeRepository.save(like);
+    }
+
+    return {
+      ...tweet,
+      likesCount,
+      isLiked: true,
     };
   }
 }

@@ -126,4 +126,15 @@ export class TweetsController {
     delete tweet.retweets;
     return tweet;
   }
+
+  @Post(':id/like')
+  @UseGuards(AuthGuard)
+  async like(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<ITweetResponse> {
+    const tweet = await this.tweetsService.like(id, currentUser);
+    delete tweet.retweets;
+    return tweet;
+  }
 }
