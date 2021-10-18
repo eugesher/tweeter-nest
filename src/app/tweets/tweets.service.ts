@@ -64,16 +64,6 @@ export class TweetsService {
     return queryBuilder;
   }
 
-  setIsRetweeted(tweets: Tweet[], currentUser: User): Tweet[] {
-    return tweets.map((tweet) => {
-      if (tweet.retweets.some((retweet) => retweet.userId === currentUser.id)) {
-        return { ...tweet, isRetweeted: true };
-      } else {
-        return { ...tweet, isRetweeted: false };
-      }
-    });
-  }
-
   private async setRetweets(
     tweets: Tweet[],
     user: User,
@@ -126,6 +116,16 @@ export class TweetsService {
     } else {
       return tweet;
     }
+  }
+
+  setIsRetweeted(tweets: Tweet[], currentUser: User): Tweet[] {
+    return tweets.map((tweet) => {
+      if (tweet.retweets.some((retweet) => retweet.userId === currentUser.id)) {
+        return { ...tweet, isRetweeted: true };
+      } else {
+        return { ...tweet, isRetweeted: false };
+      }
+    });
   }
 
   async create(
