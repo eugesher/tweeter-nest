@@ -1,0 +1,5 @@
+entity: Retweet
+items:
+  retweet{1..5000}:
+    user: '@user*'
+    tweet: '@tweet*'

@@ -41,7 +41,6 @@ async function loadFixtures(fixturesPath: string): Promise<void> {
     const resolver = new Resolver();
     const fixtures = resolver.resolve(loader.fixtureConfigs);
     const builder = new Builder(connection, new Parser());
-    const skippedMessage = 'Skipped due unique condition';
 
     let counter = 0;
     for (const fixture of fixturesIterator(fixtures)) {
@@ -50,7 +49,6 @@ async function loadFixtures(fixturesPath: string): Promise<void> {
 
       if (entity.constructor.name === 'User') {
         if (await isDuplicateUser(entity)) {
-          console.log(skippedMessage);
           counter++;
           continue;
         }
@@ -58,6 +56,7 @@ async function loadFixtures(fixturesPath: string): Promise<void> {
 
       await getRepository(entity.constructor.name).save(entity);
       counter++;
+      console.clear();
       console.log(
         `${entity.constructor.name} loaded (${counter}/${fixtures.length})`,
       );
