@@ -1,11 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RenameRepliesRelationToRetweet1634217573908
+export class RenameRepliesRelationToRetweets1634217573908
   implements MigrationInterface
 {
-  name = 'RenameRepliesRelationToRetweet1634217573908';
+  name = 'RenameRepliesRelationToRetweets1634217573908';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE "users_replies_tweets"`);
     await queryRunner.query(
       `ALTER TABLE "tweets" RENAME COLUMN "replies_count" TO "retweets_count"`,
     );
@@ -43,5 +44,6 @@ export class RenameRepliesRelationToRetweet1634217573908
     await queryRunner.query(
       `ALTER TABLE "tweets" RENAME COLUMN "retweets_count" TO "replies_count"`,
     );
+    await queryRunner.query(`CREATE TABLE "users_replies_tweets"`);
   }
 }
