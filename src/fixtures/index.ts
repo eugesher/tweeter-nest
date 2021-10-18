@@ -72,6 +72,7 @@ async function loadFixtures(fixturesPath: string): Promise<void> {
 
 loadFixtures(join(__dirname, 'config'))
   .then(() => {
+    console.clear();
     console.log('Fixtures are successfully loaded.');
   })
   .catch((err) => console.log(err));

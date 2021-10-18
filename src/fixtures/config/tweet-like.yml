@@ -1,5 +1,5 @@
-entity: Like
+entity: TweetLike
 items:
-  like{1..500}:
+  tweetlike{1..500}:
     user: '@user*'
     tweet: '@tweet*'

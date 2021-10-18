@@ -10,7 +10,7 @@ import {
 import { hash } from 'bcrypt';
 import { Tweet } from '../../tweets/entities/tweet.entity';
 import { Retweet } from '../../tweets/entities/retweet.entity';
-import { Like } from '../../tweets/entities/like.entity';
+import { TweetLike } from '../../tweets/entities/tweet-like.entity';
 
 @Entity('users')
 export class User {
@@ -50,8 +50,8 @@ export class User {
   @OneToMany(() => Retweet, (retweet) => retweet.user)
   retweets: Retweet[];
 
-  @OneToMany(() => Like, (like) => like.user)
-  likes: Like[];
+  @OneToMany(() => TweetLike, (tweetLike) => tweetLike.user)
+  tweetLikes: TweetLike[];
 
   @BeforeInsert()
   async hashPassword(): Promise<void> {
