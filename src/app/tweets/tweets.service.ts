@@ -83,10 +83,15 @@ export class TweetsService {
     const retweets = await this.retweetRepository.find({
       user: currentUser,
     });
+
+    if (!retweets.length) {
+      return [];
+    }
+
     const retweetedTweetsIds = retweets.map((retweet) => retweet.tweetId);
 
-    queryBuilder.where('tweets.id IN (:...retweetIds)', {
-      retweetIds: retweetedTweetsIds,
+    queryBuilder.where('tweets.id IN (:...retweetedTweetsIds)', {
+      retweetedTweetsIds,
     });
 
     let retweetedTweets = await queryBuilder.getMany();
@@ -198,8 +203,8 @@ export class TweetsService {
       retweet = new Retweet();
       retweet.user = currentUser;
       retweet.tweet = tweet;
-      await this.retweetRepository.save(retweet);
       await this.tweetRepository.save(tweet);
+      await this.retweetRepository.save(retweet);
     }
 
     return {
