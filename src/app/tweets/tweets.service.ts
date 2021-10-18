@@ -64,6 +64,31 @@ export class TweetsService {
     return queryBuilder;
   }
 
+  private static compare(a: Tweet, b: Tweet): number {
+    if (a.createdAt < b.createdAt) {
+      return 1;
+    } else if (a.createdAt > b.createdAt) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
+  private setCreateDate(
+    retweetedTweets: Tweet[],
+    retweets: Retweet[],
+  ): Tweet[] {
+    return retweetedTweets.map((rt) => {
+      const foundRt = retweets.find((r) => r.tweetId === rt.id);
+      const createdAt = foundRt && foundRt.createdAt;
+      if (createdAt) {
+        return { ...rt, createdAt };
+      } else {
+        return rt;
+      }
+    });
+  }
+
   private async setRetweets(
     tweets: Tweet[],
     user: User,
@@ -82,26 +107,10 @@ export class TweetsService {
     });
 
     let retweetedTweets = await queryBuilder.getMany();
-    retweetedTweets = retweetedTweets.map((rt) => {
-      const foundRt = retweets.find((r) => r.tweetId === rt.id);
-      const createdAt = foundRt && foundRt.createdAt;
-      if (createdAt) {
-        return { ...rt, createdAt };
-      } else {
-        return rt;
-      }
-    });
+    retweetedTweets = this.setCreateDate(retweetedTweets, retweets);
 
     tweets.push(...retweetedTweets);
-    tweets.sort((a, b) => {
-      if (a.createdAt < b.createdAt) {
-        return 1;
-      } else if (a.createdAt > b.createdAt) {
-        return -1;
-      } else {
-        return 0;
-      }
-    });
+    tweets.sort(TweetsService.compare);
 
     return tweets;
   }
