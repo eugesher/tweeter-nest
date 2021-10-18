@@ -18,7 +18,6 @@ import { User } from '../users/entities/user.entity';
 import { CreateTweetDto } from './dto/create-tweet.dto';
 import { ITweetResponse } from './interfaces/tweet-response.interface';
 import { IFindTweetsQuery } from './interfaces/find-tweets-query.interface';
-import { TweetsFilter } from './types/tweets-filter.type';
 import {
   DELETE_FORBIDDEN,
   NOT_FOUND,
@@ -65,7 +64,7 @@ export class TweetsService {
     return queryBuilder;
   }
 
-  private setIsRetweeted(tweets: Tweet[], currentUser: User): Tweet[] {
+  setIsRetweeted(tweets: Tweet[], currentUser: User): Tweet[] {
     return tweets.map((tweet) => {
       if (tweet.retweets.some((retweet) => retweet.userId === currentUser.id)) {
         return { ...tweet, isRetweeted: true };
@@ -153,7 +152,7 @@ export class TweetsService {
     username: string,
     query: IFindTweetsQuery,
     currentUser: User,
-    filter?: TweetsFilter,
+    options = { withRetweets: false },
   ): Promise<Tweet[]> {
     const author =
       username === currentUser.username
@@ -166,15 +165,9 @@ export class TweetsService {
 
     let tweets = await queryBuilder.getMany();
 
-    if (filter === 'with_retweets') {
+    if (options.withRetweets) {
       tweets = await this.setRetweets(tweets, currentUser, queryBuilder);
     }
-
-    if (filter === 'media') {
-      tweets = tweets.filter((tweet) => tweet.image);
-    }
-
-    tweets = this.setIsRetweeted(tweets, currentUser);
 
     return tweets;
   }

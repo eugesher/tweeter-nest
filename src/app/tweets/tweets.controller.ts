@@ -37,7 +37,10 @@ export class TweetsController {
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
   ): Promise<Tweet[]> {
-    return await this.tweetsService.findAll(query, currentUser);
+    let tweets = await this.tweetsService.findAll(query, currentUser);
+    tweets = this.tweetsService.setIsRetweeted(tweets, currentUser);
+    tweets.forEach((tweet) => delete tweet.retweets);
+    return tweets;
   }
 
   @Get(':username')
@@ -47,7 +50,14 @@ export class TweetsController {
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
   ): Promise<Tweet[]> {
-    return await this.tweetsService.findByAuthor(username, query, currentUser);
+    let tweets = await this.tweetsService.findByAuthor(
+      username,
+      query,
+      currentUser,
+    );
+    tweets = this.tweetsService.setIsRetweeted(tweets, currentUser);
+    tweets.forEach((tweet) => delete tweet.retweets);
+    return tweets;
   }
 
   @Get(':username/with_retweets')
@@ -57,12 +67,15 @@ export class TweetsController {
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
   ): Promise<Tweet[]> {
-    return await this.tweetsService.findByAuthor(
+    let tweets = await this.tweetsService.findByAuthor(
       username,
       query,
       currentUser,
-      'with_retweets',
+      { withRetweets: true },
     );
+    tweets = this.tweetsService.setIsRetweeted(tweets, currentUser);
+    tweets.forEach((tweet) => delete tweet.retweets);
+    return tweets;
   }
 
   @Get(':username/media')
@@ -72,12 +85,15 @@ export class TweetsController {
     @Query('') query: IFindTweetsQuery,
     @CurrentUser() currentUser: User,
   ): Promise<Tweet[]> {
-    return await this.tweetsService.findByAuthor(
+    let tweets = await this.tweetsService.findByAuthor(
       username,
       query,
       currentUser,
-      'media',
     );
+    tweets = tweets.filter((tweet) => tweet.image);
+    tweets = this.tweetsService.setIsRetweeted(tweets, currentUser);
+    tweets.forEach((tweet) => delete tweet.retweets);
+    return tweets;
   }
 
   @Delete(':id')
