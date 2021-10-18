@@ -44,6 +44,7 @@ export class TweetsService {
     const queryBuilder = getRepository(Tweet)
       .createQueryBuilder('tweets')
       .loadRelationCountAndMap('tweets.retweetsCount', 'tweets.retweets')
+      .loadRelationCountAndMap('tweets.likesCount', 'tweets.likes')
       .leftJoin('tweets.retweets', 'retweets')
       .addSelect('retweets.userId')
       .leftJoin('tweets.author', 'author')
