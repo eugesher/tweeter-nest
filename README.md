@@ -34,15 +34,15 @@ This application was created as a submission to a [DevChallenges](https://devcha
 * Explore tweets by latest
 * Like tweet
 * Reply tweet
-* Get tweets and retweets by username
-* Get liked tweets by username
+* Get profile tweets and retweets
+* Get profile liked tweets
 
 ## Upcoming features
 
 * Follow profile
 * Get following profiles
 * Get follower profiles
-* Save tweet as bookmark
+* Save tweet to bookmarks
 * Get bookmarks
 * Set tweet to be public or only follower
 * Get feed by following profiles
