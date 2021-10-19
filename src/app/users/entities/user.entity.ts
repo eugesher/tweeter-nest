@@ -11,6 +11,7 @@ import { hash } from 'bcrypt';
 import { Tweet } from '../../tweets/entities/tweet.entity';
 import { Retweet } from '../../tweets/entities/retweet.entity';
 import { TweetLike } from '../../tweets/entities/tweet-like.entity';
+import { Follow } from './follow.entity';
 
 @Entity('users')
 export class User {
@@ -52,6 +53,12 @@ export class User {
 
   @OneToMany(() => TweetLike, (tweetLike) => tweetLike.user)
   tweetLikes: TweetLike[];
+
+  @OneToMany(() => Follow, (follow) => follow.follower)
+  followers: User[];
+
+  @OneToMany(() => Follow, (follow) => follow.following)
+  followings: User[];
 
   @BeforeInsert()
   async hashPassword(): Promise<void> {
