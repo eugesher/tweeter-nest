@@ -19,6 +19,7 @@ This application was created as a submission to a [DevChallenges](https://devcha
 ### Authentication
 
 * Register new account
+* Encrypt password
 * Log in
 * Return JWT token
 
